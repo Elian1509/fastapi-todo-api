@@ -30,8 +30,8 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
 
 # LISTAR todas las tareas
 @app.get("/tasks/", response_model=List[schemas.TaskResponse])
-def read_tasks(priority: Optional[PriorityEnum] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tasks = crud.get_tasks(db, priority=priority, skip=skip, limit=limit)
+def read_tasks(priority: Optional[PriorityEnum] = None, category_id: Optional[int] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    tasks = crud.get_tasks(db, priority=priority, category_id=category_id, skip=skip, limit=limit)
     return tasks
 
 # OBTENER una tarea por ID
@@ -57,3 +57,43 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     if db_task is None:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
     return db_task
+
+
+#######
+## Categorias
+#######
+
+# CREAR categoria
+@app.post("/category/", response_model=schemas.CategoryResponse, status_code=201)
+def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
+    return crud.create_category(db=db, category=category)
+
+# LISTAR todas las categorias
+@app.get("/category/", response_model=List[schemas.CategoryResponse])
+def read_categorys(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    categorys = crud.get_categorys(db, skip=skip, limit=limit)
+    return categorys
+
+# OBTENER una categoria por ID
+@app.get("/category/{category_id}", response_model=schemas.CategoryResponse)
+def read_category(category_id: int, db: Session = Depends(get_db)):
+    db_category = crud.get_category(db, category_id=category_id)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    return db_category
+
+# ACTUALIZAR categoria
+@app.put("/category/{category_id}", response_model=schemas.CategoryResponse)
+def update_category(category_id: int, category: schemas.CategoryUpdate, db: Session = Depends(get_db)):
+    db_category = crud.update_category(db, category_id=category_id, category_update=category)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    return db_category
+
+# ELIMINAR categoria
+@app.delete("/category/{category_id}", response_model=schemas.CategoryResponse)
+def delete_category(category_id: int, db: Session = Depends(get_db)):
+    db_category = crud.delete_category(db, category_id=category_id)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    return db_category

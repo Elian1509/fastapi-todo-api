@@ -14,20 +14,51 @@ class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     priority: PriorityEnum
+    category_id: Optional[int] = None
 
 # Schema para actualizar una tarea
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     completed: Optional[bool] = None
-    priority: Optional[PriorityEnum] = None 
+    priority: Optional[PriorityEnum] = None
+    category_id: Optional[int] = None
 
-# Schema para respuesta (lo que devuelve la API)
+
+
+
+
+#######
+## Categorias
+#######
+
+# Schema para crear una categoria
+class CategoryCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+# Schema para actualizar una categoria
+class CategoryUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+# Schema para respuesta (lo que devuelve la API de categorias)
+class CategoryResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+# Schema para respuesta (lo que devuelve la API de tareas)
 class TaskResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
     priority: PriorityEnum
+    category_id: Optional[int] = None
+    category: Optional[CategoryResponse] = None
     completed: bool
     created_at: datetime
     updated_at: Optional[datetime]
