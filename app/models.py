@@ -15,8 +15,13 @@ class Task(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    ##Relacion con la categoria
     category_id = Column(Integer, ForeignKey('category.id'), nullable=True)
     category = relationship("Category", back_populates="tasks")
+
+    #Relacion con usuario
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="tasks")
     
 
 #######
@@ -32,3 +37,20 @@ class Category(Base):
     description = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     tasks = relationship("Task", back_populates="category")
+    
+
+#######
+## Usuarios
+#######
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relación con tareas
+    tasks = relationship("Task", back_populates="owner")

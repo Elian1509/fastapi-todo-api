@@ -3,17 +3,17 @@ from app import models, schemas
 
 from app.schemas import PriorityEnum
 
-def create_task(db: Session, task: schemas.TaskCreate):
-    db_task = models.Task(**task.dict())
+def create_task(db: Session, task: schemas.TaskCreate, user_id: int):
+    db_task = models.Task(**task.dict(), owner_id=user_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
     return db_task
 
-def get_tasks(db: Session, priority = None, category_id = None, skip: int = 0, limit: int = 100):
-    query = db.query(models.Task).options(joinedload(models.Task.category)
-                                          
-                                          )
+def get_tasks(db: Session, user_id: int, priority = None, category_id = None, skip: int = 0, limit: int = 100):
+    query = db.query(models.Task).options(joinedload(models.Task.category))
+
+    query = query.filter(models.Task.owner_id == user_id)
     if priority:
         query = query.filter(models.Task.priority == priority)
 
@@ -21,11 +21,13 @@ def get_tasks(db: Session, priority = None, category_id = None, skip: int = 0, l
         query = query.filter(models.Task.category_id == category_id)
     return query.offset(skip).limit(limit).all()
 
-def get_task(db: Session, task_id: int):
-    return db.query(models.Task).options(joinedload(models.Task.category)).filter(models.Task.id == task_id).first()
+def get_task(db: Session, task_id: int, user_id: int):
+    return db.query(models.Task).options(joinedload(models.Task.category)).filter(
+        models.Task.id == task_id,
+        models.Task.owner_id == user_id).first()
 
-def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate):
-    db_task = get_task(db, task_id)
+def update_task(db: Session, task_id: int, user_id: int, task_update: schemas.TaskUpdate):
+    db_task = get_task(db, task_id, user_id)
     if db_task:
         update_data = task_update.dict(exclude_unset=True)
         for key, value in update_data.items():
@@ -34,8 +36,8 @@ def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate):
         db.refresh(db_task)
     return db_task
 
-def delete_task(db: Session, task_id: int):
-    db_task = get_task(db, task_id)
+def delete_task(db: Session, task_id: int, user_id: int):
+    db_task = get_task(db, task_id, user_id)
     if db_task:
         db.delete(db_task)
         db.commit()
