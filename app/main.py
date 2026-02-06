@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from app import auth, models, schemas, crud
 from app.database import engine, get_db
+from app.exceptions import ConflictException, NotFoundException, UnauthorizedException
 from app.schemas import PriorityEnum
 
 # Crear las tablas en la base de datos
@@ -51,7 +52,7 @@ def read_tasks(
 def read_task(task_id: int, db: Session = Depends(get_db),current_user: models.User = Depends(auth.get_current_user)):
     db_task = crud.get_task(db, task_id=task_id, user_id=current_user.id)
     if db_task is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Tarea con ID {task_id} no encontrada o no te pertenece")
     return db_task
 
 # ACTUALIZAR tarea
@@ -59,7 +60,7 @@ def read_task(task_id: int, db: Session = Depends(get_db),current_user: models.U
 def update_task(task_id: int, task: schemas.TaskUpdate, db: Session = Depends(get_db),current_user: models.User = Depends(auth.get_current_user)):
     db_task = crud.update_task(db, task_id=task_id, task_update=task,user_id=current_user.id)
     if db_task is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Tarea con ID {task_id} no encontrada o no te pertenece")
     return db_task
 
 # ELIMINAR tarea
@@ -67,7 +68,7 @@ def update_task(task_id: int, task: schemas.TaskUpdate, db: Session = Depends(ge
 def delete_task(task_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     db_task = crud.delete_task(db, task_id=task_id, user_id=current_user.id)
     if db_task is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Tarea con ID {task_id} no encontrada o no te pertenece")
     return db_task
 
 
@@ -91,7 +92,7 @@ def read_categorys(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
 def read_category(category_id: int, db: Session = Depends(get_db)):
     db_category = crud.get_category(db, category_id=category_id)
     if db_category is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Categoría con ID {category_id} no encontrada")
     return db_category
 
 # ACTUALIZAR categoria
@@ -99,7 +100,7 @@ def read_category(category_id: int, db: Session = Depends(get_db)):
 def update_category(category_id: int, category: schemas.CategoryUpdate, db: Session = Depends(get_db)):
     db_category = crud.update_category(db, category_id=category_id, category_update=category)
     if db_category is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Categoría con ID {category_id} no encontrada")
     return db_category
 
 # ELIMINAR categoria
@@ -107,7 +108,7 @@ def update_category(category_id: int, category: schemas.CategoryUpdate, db: Sess
 def delete_category(category_id: int, db: Session = Depends(get_db)):
     db_category = crud.delete_category(db, category_id=category_id)
     if db_category is None:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise NotFoundException(detail=f"Categoría con ID {category_id} no encontrada")
     return db_category
 
 
@@ -121,7 +122,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Verificar si el email ya existe
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email ya registrado")
+        raise ConflictException(detail=f"El email {user.email} ya está registrado")
     
     # Crear usuario
     hashed_password = auth.hash_password(user.password)
@@ -135,12 +136,11 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # Buscar usuario
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email o contraseña incorrectos",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if not user:
+        raise UnauthorizedException(detail="Email o contraseña incorrectos")
+        
+    if not auth.verify_password(form_data.password, user.hashed_password):
+        raise UnauthorizedException(detail="Email o contraseña incorrectos")
     
     # Crear token
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
