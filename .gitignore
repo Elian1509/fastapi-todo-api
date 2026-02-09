@@ -1,9 +1,4 @@
-# En PowerShell
-New-Item -ItemType File -Path .gitignore
-```
 
-**Abre `.gitignore` y pega esto:**
-```
 # Python
 __pycache__/
 *.py[cod]
@@ -14,6 +9,7 @@ venv/
 env/
 *.db
 *.sqlite3
+.env
 
 # IDE
 .vscode/

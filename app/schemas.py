@@ -40,10 +40,10 @@ class TaskUpdate(BaseModel):
 
 # Schema para crear una categoria
 class CategoryCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     
-    @field_validator('name')
+    @field_validator('title')
     def validate_name(cls, v):
         if not v.strip():
             raise ValueError('El nombre no puede estar vacío')
@@ -51,10 +51,10 @@ class CategoryCreate(BaseModel):
 
 # Schema para actualizar una categoria
 class CategoryUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     
-    @field_validator('name')
+    @field_validator('title')
     def validate_name(cls, v):
         if v is not None and not v.strip():
             raise ValueError('El nombre no puede estar vacío')
