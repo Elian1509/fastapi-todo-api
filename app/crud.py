@@ -48,7 +48,7 @@ def delete_task(db: Session, task_id: int, user_id: int):
 ## Categorias
 #######
 
-def create_category(db: Session, category: schemas.categoryCreate):
+def create_category(db: Session, category: schemas.CategoryCreate):
     db_category = models.Category(**category.dict())
     db.add(db_category)
     db.commit()
